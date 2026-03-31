@@ -1,0 +1,24 @@
+# Dependency
+node_modules/
+jspm_packages/
+.venv/
+
+# Build outputs
+dist/
+build/
+*.pyc
+*.log
+
+# Environment secrets
+.env
+.env.local
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

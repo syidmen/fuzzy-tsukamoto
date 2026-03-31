@@ -1,0 +1,24 @@
+<div class="container">
+    <h2>Stok HP (Fuzzy Tsukamoto)</h2>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>Harga HP (Juta Rupiah):</label>
+            <input type="number" name="harga" step="0.1" required placeholder="Contoh: 6.5">
+        </div>
+
+        <div class="form-group">
+            <label>Jumlah Terjual (Unit):</label>
+            <input type="number" name="terjual" required placeholder="Contoh: 25">
+        </div>
+        
+        <button type="submit">Cek Saran Stok</button>
+    </form>
+
+    {% if hasil is not none %}
+        <div class="result-box">
+            <p>Saran Total Stok Baru:</p>
+            <span class="result-value">{{ hasil }} Unit</span>
+        </div>
+    {% endif %}
+</div>
