@@ -23,3 +23,14 @@ pip flask
 
 #Testing development di web
 flask --app main run
+
+## 1. Gunakan Branching (Jangan Push ke Main!)
+Jangan pernah melakukan `git push` langsung ke branch `main`. Selalu buat branch baru untuk setiap fitur atau perbaikan.
+
+* **Main Branch:** Hanya untuk kode yang sudah stabil dan siap jalan.
+* **Feature Branch:** Untuk ngoding fitur baru (contoh: `feat-login`, `feat-api-flask`).
+* **Fix Branch:** Untuk benerin bug (contoh: `fix-styling`, `fix-route-error`).
+
+**Cara membuat branch di terminal:**
+```bash
+git checkout -b nama-fitur-baru
