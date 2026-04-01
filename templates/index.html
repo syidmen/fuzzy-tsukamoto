@@ -1,24 +1,182 @@
-<div class="container">
-    <h2>Stok HP (Fuzzy Tsukamoto)</h2>
-    
-    <form method="POST">
-        <div class="form-group">
-            <label>Harga HP (Juta Rupiah):</label>
-            <input type="number" name="harga" step="0.1" required placeholder="Contoh: 6.5">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fuzzy Tsukamoto — Saran Stok HP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <main class="wrapper">
+
+    <header class="site-header">
+      <div class="badge">Logika Fuzzy</div>
+      <h1>Tsukamoto<br><span>Stok HP</span></h1>
+      <p class="subtitle">Masukkan data harga dan penjualan untuk mendapatkan saran stok optimal menggunakan metode inferensi Tsukamoto.</p>
+    </header>
+
+    <div class="card-form">
+      <form method="POST">
+
+        <div class="input-row">
+          <!-- Harga -->
+          <div class="field">
+            <label for="harga">
+              <span class="label-icon">💰</span>
+              Harga HP
+              <span class="label-unit">juta rupiah</span>
+            </label>
+            <div class="input-wrap">
+              <input type="number" id="harga" name="harga" step="0.1" min="1" max="10"
+                     required placeholder="mis. 6.5"
+                     value="{{ request.form.get('harga', '') }}"/>
+              <div class="input-scale">
+                <span>Rendah</span>
+                <div class="scale-bar">
+                  <div class="scale-fill" id="scale-harga"></div>
+                </div>
+                <span>Tinggi</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terjual -->
+          <div class="field">
+            <label for="terjual">
+              <span class="label-icon">📦</span>
+              Jumlah Terjual
+              <span class="label-unit">unit</span>
+            </label>
+            <div class="input-wrap">
+              <input type="number" id="terjual" name="terjual" step="1" min="0" max="50"
+                     required placeholder="mis. 25"
+                     value="{{ request.form.get('terjual', '') }}"/>
+              <div class="input-scale">
+                <span>Sedikit</span>
+                <div class="scale-bar">
+                  <div class="scale-fill" id="scale-terjual"></div>
+                </div>
+                <span>Banyak</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-            <label>Jumlah Terjual (Unit):</label>
-            <input type="number" name="terjual" required placeholder="Contoh: 25">
-        </div>
-        
-        <button type="submit">Cek Saran Stok</button>
-    </form>
+        <button type="submit" class="btn-submit">
+          <span>Hitung Saran Stok</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+
+      </form>
+    </div>
 
     {% if hasil is not none %}
-        <div class="result-box">
-            <p>Saran Total Stok Baru:</p>
-            <span class="result-value">{{ hasil }} Unit</span>
+    <div class="result-section">
+
+      <div class="result-card">
+        <div class="result-label">Saran Total Stok Baru</div>
+        <div class="result-number">
+          <span class="num" id="animated-result" data-target="{{ hasil }}">0</span>
+          <span class="unit">Unit</span>
         </div>
+        <div class="result-bar-wrap">
+          <div class="result-bar">
+            <div class="result-bar-fill" style="width: {{ [[hasil / 60 * 100, 100] | min, 0] | max }}%"></div>
+          </div>
+          <span class="result-bar-label">dari maks. 60 unit</span>
+        </div>
+      </div>
+
+      {% if detail %}
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-title">💰 Derajat Keanggotaan Harga</div>
+          <div class="detail-rows">
+            <div class="detail-row">
+              <span>Rendah</span>
+              <div class="mini-bar"><div style="width:{{ detail.harga_rendah * 100 }}%"></div></div>
+              <span class="val">{{ detail.harga_rendah }}</span>
+            </div>
+            <div class="detail-row">
+              <span>Sedang</span>
+              <div class="mini-bar"><div style="width:{{ detail.harga_sedang * 100 }}%"></div></div>
+              <span class="val">{{ detail.harga_sedang }}</span>
+            </div>
+            <div class="detail-row">
+              <span>Tinggi</span>
+              <div class="mini-bar"><div style="width:{{ detail.harga_tinggi * 100 }}%"></div></div>
+              <span class="val">{{ detail.harga_tinggi }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-title">📦 Derajat Keanggotaan Terjual</div>
+          <div class="detail-rows">
+            <div class="detail-row">
+              <span>Sedikit</span>
+              <div class="mini-bar"><div style="width:{{ detail.terjual_sedikit * 100 }}%"></div></div>
+              <span class="val">{{ detail.terjual_sedikit }}</span>
+            </div>
+            <div class="detail-row">
+              <span>Sedang</span>
+              <div class="mini-bar"><div style="width:{{ detail.terjual_sedang * 100 }}%"></div></div>
+              <span class="val">{{ detail.terjual_sedang }}</span>
+            </div>
+            <div class="detail-row">
+              <span>Banyak</span>
+              <div class="mini-bar"><div style="width:{{ detail.terjual_banyak * 100 }}%"></div></div>
+              <span class="val">{{ detail.terjual_banyak }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
     {% endif %}
-</div>
+
+    <footer>Fuzzy Tsukamoto · Sistem Pendukung Keputusan Stok HP</footer>
+
+  </main>
+
+  <script>
+    // Scale bar live preview on input
+    const hargaInput   = document.getElementById('harga');
+    const terjualInput = document.getElementById('terjual');
+
+    function updateScale(input, barId, min, max) {
+      const bar = document.getElementById(barId);
+      if (!bar) return;
+      const pct = Math.min(Math.max((input.value - min) / (max - min), 0), 1) * 100;
+      bar.style.width = pct + '%';
+    }
+
+    hargaInput.addEventListener('input',   () => updateScale(hargaInput,   'scale-harga',   1, 10));
+    terjualInput.addEventListener('input', () => updateScale(terjualInput, 'scale-terjual', 0, 50));
+
+    // Trigger on load if values exist
+    updateScale(hargaInput,   'scale-harga',   1, 10);
+    updateScale(terjualInput, 'scale-terjual', 0, 50);
+
+    // Animated counter for result
+    const el = document.getElementById('animated-result');
+    if (el) {
+      const target = parseInt(el.dataset.target);
+      let current = 0;
+      const step = Math.ceil(target / 40);
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = current;
+        if (current >= target) clearInterval(timer);
+      }, 30);
+    }
+  </script>
+
+</body>
+</html>
