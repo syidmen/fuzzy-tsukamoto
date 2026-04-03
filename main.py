@@ -195,8 +195,10 @@ def home():
         try:
             unit  = float(request.form.get('unit', 0))
             harga = float(request.form.get('harga', 0))
-            if unit < 0 or harga < 0:
-                raise ValueError("Nilai tidak boleh negatif")
+            if unit < 1 or unit > 1000:
+                raise ValueError("Unit HP harus antara 1 – 1.000.")
+            if harga < 1_000_000 or harga > 20_000_000:
+                raise ValueError("Harga HP harus antara Rp 1.000.000 – Rp 20.000.000.")
             result = hitung_tsukamoto(unit, harga)
         except (ValueError, ZeroDivisionError) as e:
             error = str(e)

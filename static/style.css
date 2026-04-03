@@ -95,7 +95,7 @@ input[type="text"]::placeholder, input[type="number"]::placeholder { color: #aab
 .threshold-label { font-size: .62rem; color: var(--muted); margin-top: 8px; text-align: center; }
 
 /* STEP SECTIONS */
-.step-section { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; animation: fadeUp .5s ease both; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+.step-section { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; animation: fadeUp .5s ease both; box-shadow: 0 2px 10px rgba(0,0,0,.05); overflow: hidden; }
 .step-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
 .step-num { font-family: var(--fhead); font-size: 2rem; font-weight: 800; color: var(--border); line-height: 1; flex-shrink: 0; }
 .step-title { font-family: var(--fhead); font-size: 1.05rem; font-weight: 700; color: var(--text); }
@@ -105,7 +105,9 @@ input[type="text"]::placeholder, input[type="number"]::placeholder { color: #aab
 .fuzzy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 @media(max-width:600px) { .fuzzy-grid { grid-template-columns: 1fr; } }
 
-.fuzzy-card { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+.fuzzy-card { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; overflow: hidden; min-width: 0; }
+.chart-wrap { position: relative; width: 100%; overflow: hidden; }
+canvas { display: block; max-width: 100%; }
 .fuzzy-card-title { font-family: var(--fhead); font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: 14px; }
 .mu-rows { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
 .mu-row { display: grid; grid-template-columns: 70px 1fr 46px; align-items: center; gap: 8px; font-size: .72rem; }

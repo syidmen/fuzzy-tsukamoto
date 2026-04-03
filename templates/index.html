@@ -33,7 +33,7 @@
           </label>
           <input type="text" inputmode="numeric" id="unit" name="unit" autocomplete="off" required
                  placeholder="mis. 250" value="{{ prev_unit }}"/>
-          <div class="input-hint">Sedikit ≤200 · Sedang 150–500 · Banyak ≥600</div>
+          <div class="input-hint">Min 1 · Maks 1.000 · Sedikit ≤200 · Sedang 150–500 · Banyak ≥600</div>
         </div>
         <div class="field">
           <label for="harga">
@@ -42,13 +42,14 @@
           </label>
           <input type="text" inputmode="numeric" id="harga" name="harga" autocomplete="off" required
                  placeholder="mis. 7.000.000" value="{{ prev_harga }}"/>
-          <div class="input-hint">Murah ≤3jt · Sedang 1–10jt · Mahal ≥15jt</div>
+          <div class="input-hint">Min 1.000.000 · Maks 20.000.000 · Murah ≤3jt · Sedang 1–10jt · Mahal ≥15jt</div>
         </div>
       </div>
       <button type="submit" class="btn-submit">
         <span>Lihat Saran Pembelian</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
+      <div id="form-error" class="error-box" style="display:none;margin-top:12px;"></div>
     </form>
   </div>
 
@@ -120,7 +121,7 @@
             <span class="mu-val">{{ result.mu_banyak }}</span>
           </div>
         </div>
-        <canvas id="chartUnit" height="180"></canvas>
+        <div class="chart-wrap"><canvas id="chartUnit" height="180"></canvas></div>
       </div>
 
       <!-- Card Harga -->
@@ -143,7 +144,7 @@
             <span class="mu-val">{{ result.mu_mahal }}</span>
           </div>
         </div>
-        <canvas id="chartHarga" height="180"></canvas>
+        <div class="chart-wrap"><canvas id="chartHarga" height="180"></canvas></div>
       </div>
 
     </div>
@@ -216,7 +217,7 @@
 
     <div class="fuzzy-card" style="margin-top:16px;">
       <div class="fuzzy-card-title">📈 Fungsi Keanggotaan Output (z) — Z* = {{ result.z_star }}</div>
-      <canvas id="chartOutput" height="160"></canvas>
+      <div class="chart-wrap"><canvas id="chartOutput" height="160"></canvas></div>
     </div>
   </section>
 
@@ -341,8 +342,24 @@ const hargaEl = document.getElementById('harga');
 if (unitEl)  attachFormatter(unitEl);
 if (hargaEl) attachFormatter(hargaEl);
 
-// Strip titik sebelum submit agar server menerima angka murni
-document.querySelector('form').addEventListener('submit', function () {
+const formErrorEl = document.getElementById('form-error');
+
+document.querySelector('form').addEventListener('submit', function (e) {
+  const unitRaw  = parseInt((unitEl  ? unitEl.value  : '').replace(/\./g, ''), 10);
+  const hargaRaw = parseInt((hargaEl ? hargaEl.value : '').replace(/\./g, ''), 10);
+  const errors   = [];
+
+  if (isNaN(unitRaw)  || unitRaw  < 1     || unitRaw  > 1000)      errors.push('Unit HP harus antara 1 – 1.000.');
+  if (isNaN(hargaRaw) || hargaRaw < 1000000 || hargaRaw > 20000000) errors.push('Harga HP harus antara Rp 1.000.000 – Rp 20.000.000.');
+
+  if (errors.length > 0) {
+    e.preventDefault();
+    formErrorEl.innerHTML = '⚠ ' + errors.join(' ');
+    formErrorEl.style.display = 'block';
+    return;
+  }
+
+  formErrorEl.style.display = 'none';
   if (unitEl)  unitEl.value  = unitEl.value.replace(/\./g, '');
   if (hargaEl) hargaEl.value = hargaEl.value.replace(/\./g, '');
 });
