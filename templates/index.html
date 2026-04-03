@@ -1,182 +1,296 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fuzzy Tsukamoto — Saran Stok HP</title>
+  <title>Fuzzy Tsukamoto — Prediksi Pembelian HP</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-  <div class="bg-grid"></div>
-  <div class="bg-glow"></div>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
 
-  <main class="wrapper">
+<main class="wrapper">
 
-    <header class="site-header">
-      <div class="badge">Logika Fuzzy</div>
-      <h1>Tsukamoto<br><span>Stok HP</span></h1>
-      <p class="subtitle">Masukkan data harga dan penjualan untuk mendapatkan saran stok optimal menggunakan metode inferensi Tsukamoto.</p>
-    </header>
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="badge">Logika Fuzzy · Tsukamoto</div>
+    <h1>Prediksi<br><span>Pembelian HP</span></h1>
+    <p class="subtitle">Sistem inferensi Tsukamoto dengan 2 variabel input, 9 rule base, dan defuzzifikasi weighted average.</p>
+  </header>
 
-    <div class="card-form">
-      <form method="POST">
-
-        <div class="input-row">
-          <!-- Harga -->
-          <div class="field">
-            <label for="harga">
-              <span class="label-icon">💰</span>
-              Harga HP
-              <span class="label-unit">juta rupiah</span>
-            </label>
-            <div class="input-wrap">
-              <input type="number" id="harga" name="harga" step="0.1" min="1" max="10"
-                     required placeholder="mis. 6.5"
-                     value="{{ request.form.get('harga', '') }}"/>
-              <div class="input-scale">
-                <span>Rendah</span>
-                <div class="scale-bar">
-                  <div class="scale-fill" id="scale-harga"></div>
-                </div>
-                <span>Tinggi</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Terjual -->
-          <div class="field">
-            <label for="terjual">
-              <span class="label-icon">📦</span>
-              Jumlah Terjual
-              <span class="label-unit">unit</span>
-            </label>
-            <div class="input-wrap">
-              <input type="number" id="terjual" name="terjual" step="1" min="0" max="50"
-                     required placeholder="mis. 25"
-                     value="{{ request.form.get('terjual', '') }}"/>
-              <div class="input-scale">
-                <span>Sedikit</span>
-                <div class="scale-bar">
-                  <div class="scale-fill" id="scale-terjual"></div>
-                </div>
-                <span>Banyak</span>
-              </div>
-            </div>
-          </div>
+  <!-- FORM -->
+  <div class="card-form">
+    <form method="POST">
+      <div class="input-row">
+        <div class="field">
+          <label for="unit">
+            <span class="label-icon">📦</span> Unit HP Terjual
+            <span class="label-unit">unit</span>
+          </label>
+          <input type="number" id="unit" name="unit" step="1" min="0" required
+                 placeholder="mis. 250" value="{{ prev_unit }}"/>
+          <div class="input-hint">Sedikit ≤200 · Sedang 150–500 · Banyak ≥600</div>
         </div>
-
-        <button type="submit" class="btn-submit">
-          <span>Hitung Saran Stok</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
-
-      </form>
-    </div>
-
-    {% if hasil is not none %}
-    <div class="result-section">
-
-      <div class="result-card">
-        <div class="result-label">Saran Total Stok Baru</div>
-        <div class="result-number">
-          <span class="num" id="animated-result" data-target="{{ hasil }}">0</span>
-          <span class="unit">Unit</span>
-        </div>
-        <div class="result-bar-wrap">
-          <div class="result-bar">
-            <div class="result-bar-fill" style="width: {{ [[hasil / 60 * 100, 100] | min, 0] | max }}%"></div>
-          </div>
-          <span class="result-bar-label">dari maks. 60 unit</span>
+        <div class="field">
+          <label for="harga">
+            <span class="label-icon">💰</span> Harga HP
+            <span class="label-unit">rupiah</span>
+          </label>
+          <input type="number" id="harga" name="harga" step="100000" min="0" required
+                 placeholder="mis. 7000000" value="{{ prev_harga }}"/>
+          <div class="input-hint">Murah ≤3jt · Sedang 1–10jt · Mahal ≥15jt</div>
         </div>
       </div>
+      <button type="submit" class="btn-submit">
+        <span>Hitung Fuzzy Tsukamoto</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </form>
+  </div>
 
-      {% if detail %}
-      <div class="detail-grid">
-        <div class="detail-card">
-          <div class="detail-title">💰 Derajat Keanggotaan Harga</div>
-          <div class="detail-rows">
-            <div class="detail-row">
-              <span>Rendah</span>
-              <div class="mini-bar"><div style="width:{{ detail.harga_rendah * 100 }}%"></div></div>
-              <span class="val">{{ detail.harga_rendah }}</span>
-            </div>
-            <div class="detail-row">
-              <span>Sedang</span>
-              <div class="mini-bar"><div style="width:{{ detail.harga_sedang * 100 }}%"></div></div>
-              <span class="val">{{ detail.harga_sedang }}</span>
-            </div>
-            <div class="detail-row">
-              <span>Tinggi</span>
-              <div class="mini-bar"><div style="width:{{ detail.harga_tinggi * 100 }}%"></div></div>
-              <span class="val">{{ detail.harga_tinggi }}</span>
-            </div>
-          </div>
-        </div>
+  {% if error %}
+  <div class="error-box">⚠ {{ error }}</div>
+  {% endif %}
 
-        <div class="detail-card">
-          <div class="detail-title">📦 Derajat Keanggotaan Terjual</div>
-          <div class="detail-rows">
-            <div class="detail-row">
-              <span>Sedikit</span>
-              <div class="mini-bar"><div style="width:{{ detail.terjual_sedikit * 100 }}%"></div></div>
-              <span class="val">{{ detail.terjual_sedikit }}</span>
-            </div>
-            <div class="detail-row">
-              <span>Sedang</span>
-              <div class="mini-bar"><div style="width:{{ detail.terjual_sedang * 100 }}%"></div></div>
-              <span class="val">{{ detail.terjual_sedang }}</span>
-            </div>
-            <div class="detail-row">
-              <span>Banyak</span>
-              <div class="mini-bar"><div style="width:{{ detail.terjual_banyak * 100 }}%"></div></div>
-              <span class="val">{{ detail.terjual_banyak }}</span>
-            </div>
-          </div>
-        </div>
+  {% if result %}
+
+  <!-- HASIL UTAMA -->
+  <div class="result-section">
+
+    <div class="result-card {% if result.keputusan == 'Bertambah' %}result-tambah{% else %}result-kurang{% endif %}">
+      <div class="result-label">Hasil Defuzzifikasi Z*</div>
+      <div class="result-number">
+        <span class="num" id="animated-zstar" data-target="{{ result.z_star }}">0</span>
+        <span class="unit">/ 100</span>
       </div>
-      {% endif %}
+      <div class="result-verdict">
+        <span class="verdict-badge verdict-{{ result.keputusan | lower }}">{{ result.keputusan }}</span>
+        <span class="verdict-sub">{{ result.keterangan }}</span>
+      </div>
+      <div class="result-bar-wrap">
+        <span class="bar-label-l">20</span>
+        <div class="result-bar">
+          <div class="threshold-line" style="left: calc((60-20)/80*100%)"></div>
+          <div class="result-bar-fill" style="width: {{ ((result.z_star - 20) / 80 * 100) | round(1) }}%"></div>
+          <div class="result-dot" style="left: {{ ((result.z_star - 20) / 80 * 100) | round(1) }}%"></div>
+        </div>
+        <span class="bar-label-r">100</span>
+      </div>
+      <div class="threshold-label">threshold = 60 (kiri=Berkurang, kanan=Bertambah)</div>
+    </div>
+
+  </div>
+
+  <!-- STEP 1: FUZZIFIKASI -->
+  <section class="step-section">
+    <div class="step-header">
+      <span class="step-num">01</span>
+      <div>
+        <div class="step-title">Fuzzifikasi</div>
+        <div class="step-sub">Menghitung derajat keanggotaan μ tiap input</div>
+      </div>
+    </div>
+
+    <div class="fuzzy-grid">
+
+      <!-- Card Unit -->
+      <div class="fuzzy-card">
+        <div class="fuzzy-card-title">📦 Unit HP Terjual = {{ result.unit | int }}</div>
+        <div class="mu-rows">
+          <div class="mu-row">
+            <span class="mu-label sedikit">μ Sedikit</span>
+            <div class="mu-bar"><div style="width:{{ (result.mu_sedikit*100)|round(1) }}%"></div></div>
+            <span class="mu-val">{{ result.mu_sedikit }}</span>
+          </div>
+          <div class="mu-row">
+            <span class="mu-label sedang">μ Sedang</span>
+            <div class="mu-bar"><div style="width:{{ (result.mu_sedang_u*100)|round(1) }}%"></div></div>
+            <span class="mu-val">{{ result.mu_sedang_u }}</span>
+          </div>
+          <div class="mu-row">
+            <span class="mu-label banyak">μ Banyak</span>
+            <div class="mu-bar"><div style="width:{{ (result.mu_banyak*100)|round(1) }}%"></div></div>
+            <span class="mu-val">{{ result.mu_banyak }}</span>
+          </div>
+        </div>
+        <canvas id="chartUnit" height="180"></canvas>
+      </div>
+
+      <!-- Card Harga -->
+      <div class="fuzzy-card">
+        <div class="fuzzy-card-title">💰 Harga = {{ result.harga_fmt }}</div>
+        <div class="mu-rows">
+          <div class="mu-row">
+            <span class="mu-label murah">μ Murah</span>
+            <div class="mu-bar"><div style="width:{{ (result.mu_murah*100)|round(1) }}%"></div></div>
+            <span class="mu-val">{{ result.mu_murah }}</span>
+          </div>
+          <div class="mu-row">
+            <span class="mu-label sedang">μ Sedang</span>
+            <div class="mu-bar"><div style="width:{{ (result.mu_sedang_h*100)|round(1) }}%"></div></div>
+            <span class="mu-val">{{ result.mu_sedang_h }}</span>
+          </div>
+          <div class="mu-row">
+            <span class="mu-label mahal">μ Mahal</span>
+            <div class="mu-bar"><div style="width:{{ (result.mu_mahal*100)|round(1) }}%"></div></div>
+            <span class="mu-val">{{ result.mu_mahal }}</span>
+          </div>
+        </div>
+        <canvas id="chartHarga" height="180"></canvas>
+      </div>
 
     </div>
-    {% endif %}
+  </section>
 
-    <footer>Fuzzy Tsukamoto · Sistem Pendukung Keputusan Stok HP</footer>
+  <!-- STEP 2: INFERENSI -->
+  <section class="step-section">
+    <div class="step-header">
+      <span class="step-num">02</span>
+      <div>
+        <div class="step-title">Inferensi &amp; Rule Evaluation</div>
+        <div class="step-sub">α = MIN(μ unit, μ harga) · 9 Rule Base</div>
+      </div>
+    </div>
 
-  </main>
+    <div class="rule-table-wrap">
+      <table class="rule-table">
+        <thead>
+          <tr>
+            <th>Rule</th>
+            <th>Kondisi IF</th>
+            <th>μ Unit</th>
+            <th>μ Harga</th>
+            <th>α (MIN)</th>
+            <th>Fungsi z</th>
+            <th>z Output</th>
+            <th>α × z</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in result.rules %}
+          <tr class="{% if r.aktif %}row-aktif{% endif %}">
+            <td><span class="rule-badge">{{ r.nama }}</span></td>
+            <td class="rule-desc">{{ r.deskripsi }}</td>
+            <td>{{ r.mu_u }}</td>
+            <td>{{ r.mu_h }}</td>
+            <td><strong>{{ r.alpha }}</strong></td>
+            <td class="mono">{{ r.fungsi }}</td>
+            <td>{{ r.z }}</td>
+            <td>{{ r.alpha_z }}</td>
+            <td>{% if r.aktif %}<span class="aktif-badge">AKTIF ✓</span>{% else %}<span class="nonaktif-badge">—</span>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-  <script>
-    // Scale bar live preview on input
-    const hargaInput   = document.getElementById('harga');
-    const terjualInput = document.getElementById('terjual');
+  <!-- STEP 3: DEFUZZIFIKASI -->
+  <section class="step-section">
+    <div class="step-header">
+      <span class="step-num">03</span>
+      <div>
+        <div class="step-title">Defuzzifikasi</div>
+        <div class="step-sub">Weighted Average: Z* = Σ(αᵢ·zᵢ) / Σαᵢ</div>
+      </div>
+    </div>
 
-    function updateScale(input, barId, min, max) {
-      const bar = document.getElementById(barId);
-      if (!bar) return;
-      const pct = Math.min(Math.max((input.value - min) / (max - min), 0), 1) * 100;
-      bar.style.width = pct + '%';
+    <div class="defuzz-box">
+      <div class="defuzz-formula">
+        Z* = Σ(αᵢ·zᵢ) / Σαᵢ = {{ result.sum_az }} / {{ result.sum_a }} = <strong>{{ result.z_star }}</strong>
+      </div>
+      <div class="defuzz-verdict">
+        Z* = {{ result.z_star }} <span class="op">{% if result.keputusan == 'Bertambah' %}&gt;{% else %}≤{% endif %}</span> 60
+        → Pembelian <span class="verdict-inline verdict-{{ result.keputusan | lower }}">{{ result.keputusan }}</span>
+        ({{ result.keterangan }})
+      </div>
+    </div>
+  </section>
+
+  {% endif %}
+
+  <footer>Fuzzy Tsukamoto · Sistem Prediksi Pembelian HP</footer>
+
+</main>
+
+<script>
+{% if result %}
+// ── Animated Z* counter ──
+const el = document.getElementById('animated-zstar');
+const target = parseFloat(el.dataset.target);
+let cur = 0;
+const step = target / 50;
+const t = setInterval(() => {
+  cur = Math.min(cur + step, target);
+  el.textContent = cur.toFixed(2);
+  if (cur >= target) clearInterval(t);
+}, 25);
+
+// ── Chart helpers ──
+const COLORS = {
+  sedikit: '#f87171',
+  sedang:  '#fbbf24',
+  banyak:  '#34d399',
+  murah:   '#34d399',
+  mahal:   '#f87171',
+  line:    'rgba(255,255,255,0.15)',
+};
+
+function makeChart(id, labels, datasets, inputVal, inputLabel) {
+  const ctx = document.getElementById(id).getContext('2d');
+  const annotation = {
+    type: 'line', scaleID: 'x',
+    value: inputVal,
+    borderColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 2,
+    borderDash: [6,3],
+    label: { display: true, content: inputLabel, color: '#fff', font: { size: 10 } }
+  };
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      animation: { duration: 800 },
+      plugins: { legend: { labels: { color: '#8892a4', font: { size: 10, family: 'DM Mono' } } } },
+      scales: {
+        x: { ticks: { color: '#4a5568', maxTicksLimit: 8, font: { size: 9 } }, grid: { color: COLORS.line } },
+        y: { min: 0, max: 1.05, ticks: { color: '#4a5568', font: { size: 9 } }, grid: { color: COLORS.line } }
+      }
     }
+  });
+}
 
-    hargaInput.addEventListener('input',   () => updateScale(hargaInput,   'scale-harga',   1, 10));
-    terjualInput.addEventListener('input', () => updateScale(terjualInput, 'scale-terjual', 0, 50));
+// Unit chart
+const unitLabels  = {{ result.chart_unit_labels | tojson }};
+const unitSedikit = {{ result.chart_unit_sedikit | tojson }};
+const unitSedang  = {{ result.chart_unit_sedang  | tojson }};
+const unitBanyak  = {{ result.chart_unit_banyak  | tojson }};
 
-    // Trigger on load if values exist
-    updateScale(hargaInput,   'scale-harga',   1, 10);
-    updateScale(terjualInput, 'scale-terjual', 0, 50);
+makeChart('chartUnit', unitLabels, [
+  { label: 'Sedikit', data: unitSedikit, borderColor: COLORS.sedikit, borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+  { label: 'Sedang',  data: unitSedang,  borderColor: COLORS.sedang,  borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+  { label: 'Banyak',  data: unitBanyak,  borderColor: COLORS.banyak,  borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+], {{ result.input_unit_val }}, 'x={{ result.input_unit_val | int }}');
 
-    // Animated counter for result
-    const el = document.getElementById('animated-result');
-    if (el) {
-      const target = parseInt(el.dataset.target);
-      let current = 0;
-      const step = Math.ceil(target / 40);
-      const timer = setInterval(() => {
-        current = Math.min(current + step, target);
-        el.textContent = current;
-        if (current >= target) clearInterval(timer);
-      }, 30);
-    }
-  </script>
+// Harga chart
+const hargaLabels = {{ result.chart_harga_labels | tojson }};
+const hargaMurah  = {{ result.chart_harga_murah  | tojson }};
+const hargaSedang = {{ result.chart_harga_sedang | tojson }};
+const hargaMahal  = {{ result.chart_harga_mahal  | tojson }};
+
+makeChart('chartHarga', hargaLabels, [
+  { label: 'Murah',  data: hargaMurah,  borderColor: COLORS.murah,  borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+  { label: 'Sedang', data: hargaSedang, borderColor: COLORS.sedang, borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+  { label: 'Mahal',  data: hargaMahal,  borderColor: COLORS.mahal,  borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+], {{ result.input_harga_val }}, 'x={{ result.input_harga_val }}jt');
+{% endif %}
+</script>
 
 </body>
 </html>

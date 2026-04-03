@@ -2,114 +2,181 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-def hitung_tsukamoto(harga, terjual):
-    # --- 1. FUZZIFIKASI ---
+def fuzzifikasi_unit(x):
+    if x <= 100:
+        sedikit = 1.0
+    elif x <= 200:
+        sedikit = (200 - x) / 100
+    else:
+        sedikit = 0.0
 
-    # HARGA (juta): Rendah 1-4, Sedang 3-7, Tinggi 6-10
-    def harga_rendah(x):
-        if x <= 3: return 1
-        if x >= 5: return 0
-        return (5 - x) / (5 - 3)
+    if x <= 150 or x >= 500:
+        sedang = 0.0
+    elif x <= 350:
+        sedang = (x - 150) / 200
+    else:
+        sedang = (500 - x) / 150
 
-    def harga_sedang(x):
-        if x <= 3 or x >= 7: return 0
-        if x == 5: return 1
-        if x < 5: return (x - 3) / (5 - 3)
-        return (7 - x) / (7 - 5)
+    if x <= 500:
+        banyak = 0.0
+    elif x < 600:
+        banyak = (x - 500) / 100
+    else:
+        banyak = 1.0
 
-    def harga_tinggi(x):
-        if x <= 5: return 0
-        if x >= 7: return 1
-        return (x - 5) / (7 - 5)
+    return round(sedikit, 4), round(sedang, 4), round(banyak, 4)
 
-    # TERJUAL (unit): Sedikit 0-20, Sedang 15-35, Banyak 30-50
-    def terjual_sedikit(x):
-        if x <= 15: return 1
-        if x >= 25: return 0
-        return (25 - x) / (25 - 15)
 
-    def terjual_sedang(x):
-        if x <= 15 or x >= 40: return 0
-        if x == 25: return 1
-        if x < 25: return (x - 15) / (25 - 15)
-        return (40 - x) / (40 - 25)
+def fuzzifikasi_harga(y):
+    if y <= 1_000_000:
+        murah = 1.0
+    elif y < 3_000_000:
+        murah = (3_000_000 - y) / 2_000_000
+    else:
+        murah = 0.0
 
-    def terjual_banyak(x):
-        if x <= 30: return 0
-        if x >= 50: return 1
-        return (x - 30) / (50 - 30)
+    if y <= 1_000_000 or y >= 10_000_000:
+        sedang = 0.0
+    elif y <= 6_500_000:
+        sedang = (y - 1_000_000) / 5_500_000
+    else:
+        sedang = (10_000_000 - y) / 3_500_000
 
-    # Hitung derajat keanggotaan input
-    mH = {
-        'rendah': harga_rendah(harga),
-        'sedang': harga_sedang(harga),
-        'tinggi': harga_tinggi(harga),
+    if y <= 8_000_000:
+        mahal = 0.0
+    elif y < 15_000_000:
+        mahal = (y - 8_000_000) / 7_000_000
+    else:
+        mahal = 1.0
+
+    return round(murah, 4), round(sedang, 4), round(mahal, 4)
+
+
+RULES = [
+    ('R1', 'sedikit', 'murah',  'berkurang'),
+    ('R2', 'sedikit', 'sedang', 'berkurang'),
+    ('R3', 'sedikit', 'mahal',  'berkurang'),
+    ('R4', 'sedang',  'murah',  'bertambah'),
+    ('R5', 'sedang',  'sedang', 'berkurang'),
+    ('R6', 'sedang',  'mahal',  'berkurang'),
+    ('R7', 'banyak',  'murah',  'bertambah'),
+    ('R8', 'banyak',  'sedang', 'bertambah'),
+    ('R9', 'banyak',  'mahal',  'bertambah'),
+]
+
+RULE_DESCRIPTIONS = {
+    'R1': 'Sedikit AND Murah → Berkurang',
+    'R2': 'Sedikit AND Sedang → Berkurang',
+    'R3': 'Sedikit AND Mahal → Berkurang',
+    'R4': 'Sedang AND Murah → Bertambah',
+    'R5': 'Sedang AND Sedang → Berkurang',
+    'R6': 'Sedang AND Mahal → Berkurang',
+    'R7': 'Banyak AND Murah → Bertambah',
+    'R8': 'Banyak AND Sedang → Bertambah',
+    'R9': 'Banyak AND Mahal → Bertambah',
+}
+
+
+def hitung_tsukamoto(unit, harga):
+    mu_sedikit, mu_sedang_u, mu_banyak = fuzzifikasi_unit(unit)
+    mu_murah, mu_sedang_h, mu_mahal    = fuzzifikasi_harga(harga)
+
+    mu_unit  = {'sedikit': mu_sedikit, 'sedang': mu_sedang_u, 'banyak': mu_banyak}
+    mu_harga = {'murah': mu_murah,     'sedang': mu_sedang_h, 'mahal': mu_mahal}
+
+    rule_detail = []
+    for nama, u_lbl, h_lbl, out_lbl in RULES:
+        alpha = round(min(mu_unit[u_lbl], mu_harga[h_lbl]), 4)
+        if out_lbl == 'berkurang':
+            z = round(100 - 80 * alpha, 4)
+            fungsi = 'z = 100 − 80α'
+        else:
+            z = round(20 + 80 * alpha, 4)
+            fungsi = 'z = 20 + 80α'
+
+        rule_detail.append({
+            'nama':      nama,
+            'deskripsi': RULE_DESCRIPTIONS[nama],
+            'u_lbl':     u_lbl.capitalize(),
+            'h_lbl':     h_lbl.capitalize(),
+            'out_lbl':   out_lbl.capitalize(),
+            'mu_u':      mu_unit[u_lbl],
+            'mu_h':      mu_harga[h_lbl],
+            'alpha':     alpha,
+            'z':         z,
+            'fungsi':    fungsi,
+            'alpha_z':   round(alpha * z, 4),
+            'aktif':     alpha > 0,
+        })
+
+    sum_az = round(sum(r['alpha_z'] for r in rule_detail), 4)
+    sum_a  = round(sum(r['alpha']   for r in rule_detail), 4)
+    z_star = round(sum_az / sum_a, 4) if sum_a > 0 else 0.0
+
+    keputusan  = 'Bertambah' if z_star > 60 else 'Berkurang'
+    keterangan = ('Sangat Bertambah' if z_star > 80
+                  else 'Cukup Bertambah' if z_star > 60
+                  else 'Cukup Berkurang' if z_star > 40
+                  else 'Sangat Berkurang')
+
+    unit_pts  = [i * 10   for i in range(101)]
+    harga_pts = [i * 500_000 for i in range(61)]
+
+    sc, sdc, bc, mc, shc, mlc = [], [], [], [], [], []
+    for xp in unit_pts:
+        s, sd, b = fuzzifikasi_unit(xp)
+        sc.append(s); sdc.append(sd); bc.append(b)
+    for yp in harga_pts:
+        m, sh, ml = fuzzifikasi_harga(yp)
+        mc.append(m); shc.append(sh); mlc.append(ml)
+
+    return {
+        'unit':        unit,
+        'harga':       harga,
+        'harga_fmt':   f"Rp {int(harga):,}".replace(',', '.'),
+        'mu_sedikit':  mu_sedikit,
+        'mu_sedang_u': mu_sedang_u,
+        'mu_banyak':   mu_banyak,
+        'mu_murah':    mu_murah,
+        'mu_sedang_h': mu_sedang_h,
+        'mu_mahal':    mu_mahal,
+        'rules':       rule_detail,
+        'sum_az':      sum_az,
+        'sum_a':       sum_a,
+        'z_star':      z_star,
+        'keputusan':   keputusan,
+        'keterangan':  keterangan,
+        'chart_unit_labels':  unit_pts,
+        'chart_unit_sedikit': sc,
+        'chart_unit_sedang':  sdc,
+        'chart_unit_banyak':  bc,
+        'input_unit_val':     unit,
+        'chart_harga_labels': [round(p / 1_000_000, 1) for p in harga_pts],
+        'chart_harga_murah':  mc,
+        'chart_harga_sedang': shc,
+        'chart_harga_mahal':  mlc,
+        'input_harga_val':    round(harga / 1_000_000, 2),
     }
-    mT = {
-        'sedikit': terjual_sedikit(terjual),
-        'sedang':  terjual_sedang(terjual),
-        'banyak':  terjual_banyak(terjual),
-    }
-
-    # --- 2. RULES & INFERENSI ---
-    # Output Stok: Berkurang (10–30), Bertambah (30–60)
-    # Invers monoton naik  → z = 30 + a*(60-30)
-    # Invers monoton turun → z = 30 - a*(30-10)
-
-    def z_bertambah(a): return 30 + a * 30   # [30, 60]
-    def z_berkurang(a): return 30 - a * 20   # [10, 30]
-
-    # Rules (alpha, z_value)
-    rules = [
-        # Harga Rendah → cenderung laku → stok bertambah
-        (min(mH['rendah'], mT['banyak']),   z_bertambah),
-        (min(mH['rendah'], mT['sedang']),   z_bertambah),
-        (min(mH['rendah'], mT['sedikit']),  z_berkurang),
-
-        # Harga Sedang
-        (min(mH['sedang'], mT['banyak']),   z_bertambah),
-        (min(mH['sedang'], mT['sedang']),   z_berkurang),
-        (min(mH['sedang'], mT['sedikit']),  z_berkurang),
-
-        # Harga Tinggi → cenderung tidak laku → stok berkurang
-        (min(mH['tinggi'], mT['banyak']),   z_berkurang),
-        (min(mH['tinggi'], mT['sedang']),   z_berkurang),
-        (min(mH['tinggi'], mT['sedikit']),  z_berkurang),
-    ]
-
-    # --- 3. DEFUZZIFIKASI (Weighted Average) ---
-    total_az = sum(a * z(a) for a, z in rules if a > 0)
-    total_a  = sum(a        for a, _ in rules if a > 0)
-
-    if total_a == 0:
-        return 0, mH, mT
-
-    hasil = round(total_az / total_a)
-    return hasil, mH, mT
 
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    hasil_stok = None
-    detail = None
-
+    result = None
+    error  = None
     if request.method == 'POST':
-        harga   = float(request.form.get('harga', 0))
-        terjual = float(request.form.get('terjual', 0))
-        hasil_stok, mH, mT = hitung_tsukamoto(harga, terjual)
+        try:
+            unit  = float(request.form.get('unit', 0))
+            harga = float(request.form.get('harga', 0))
+            if unit < 0 or harga < 0:
+                raise ValueError("Nilai tidak boleh negatif")
+            result = hitung_tsukamoto(unit, harga)
+        except (ValueError, ZeroDivisionError) as e:
+            error = str(e)
 
-        # Detail untuk ditampilkan di template (opsional)
-        detail = {
-            'harga_rendah':    round(mH['rendah'], 3),
-            'harga_sedang':    round(mH['sedang'], 3),
-            'harga_tinggi':    round(mH['tinggi'], 3),
-            'terjual_sedikit': round(mT['sedikit'], 3),
-            'terjual_sedang':  round(mT['sedang'],  3),
-            'terjual_banyak':  round(mT['banyak'],  3),
-        }
-
-    return render_template('index.html', hasil=hasil_stok, detail=detail)
+    return render_template('index.html', result=result, error=error,
+                           prev_unit=request.form.get('unit', ''),
+                           prev_harga=request.form.get('harga', ''))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)

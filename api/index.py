@@ -10,23 +10,19 @@ app = Flask(
     static_folder="../static"
 )
 
-@app.route("/", methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def home():
-    hasil_stok = None
-    detail = None
-
+    result = None
+    error  = None
     if request.method == 'POST':
-        harga   = float(request.form.get('harga', 0))
-        terjual = float(request.form.get('terjual', 0))
-        hasil_stok, mH, mT = hitung_tsukamoto(harga, terjual)
-
-        detail = {
-            'harga_rendah':    round(mH['rendah'], 3),
-            'harga_sedang':    round(mH['sedang'], 3),
-            'harga_tinggi':    round(mH['tinggi'], 3),
-            'terjual_sedikit': round(mT['sedikit'], 3),
-            'terjual_sedang':  round(mT['sedang'],  3),
-            'terjual_banyak':  round(mT['banyak'],  3),
-        }
-
-    return render_template('index.html', hasil=hasil_stok, detail=detail)
+        try:
+            unit  = float(request.form.get('unit', 0))
+            harga = float(request.form.get('harga', 0))
+            if unit < 0 or harga < 0:
+                raise ValueError("Nilai tidak boleh negatif")
+            result = hitung_tsukamoto(unit, harga)
+        except (ValueError, ZeroDivisionError) as e:
+            error = str(e)
+    return render_template('index.html', result=result, error=error,
+                           prev_unit=request.form.get('unit', ''),
+                           prev_harga=request.form.get('harga', ''))
