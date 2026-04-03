@@ -139,7 +139,7 @@ def hitung_tsukamoto(unit, harga):
 
     unit_pts  = [i * UNIT_STEP  for i in range(UNIT_MAX_N)]
     harga_pts = [i * HARGA_STEP for i in range(HARGA_MAX_N)]
-    output_pts = list(range(0, 101))
+    output_pts = list(range(20, 101))
 
     sc, sdc, bc, mc, shc, mlc = [], [], [], [], [], []
     for xp in unit_pts:
@@ -151,8 +151,8 @@ def hitung_tsukamoto(unit, harga):
 
     out_berkurang, out_bertambah = [], []
     for z in output_pts:
-        out_berkurang.append(round((100 - z) / 80, 4) if 20 <= z <= 100 else 0.0)
-        out_bertambah.append(round((z - 20) / 80, 4) if 20 <= z <= 100 else 0.0)
+        out_berkurang.append(round((100 - z) / 80, 4))
+        out_bertambah.append(round((z - 20) / 80, 4))
 
     return {
         'unit':        unit,
