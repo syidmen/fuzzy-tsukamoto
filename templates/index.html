@@ -42,7 +42,7 @@
           </label>
           <input type="text" inputmode="numeric" id="harga" name="harga" autocomplete="off" required
                  placeholder="mis. 7.000.000" value="{{ prev_harga }}"/>
-          <div class="input-hint">Min 1.000.000 · Maks 20.000.000 · Murah ≤3jt · Sedang 1–10jt · Mahal ≥15jt</div>
+          <div class="input-hint">Min 100.000 · Maks 20.000.000 · Murah ≤3jt · Sedang 1–10jt · Mahal ≥15jt</div>
         </div>
       </div>
       <button type="submit" class="btn-submit">
@@ -350,7 +350,7 @@ document.querySelector('form').addEventListener('submit', function (e) {
   const errors   = [];
 
   if (isNaN(unitRaw)  || unitRaw  < 1     || unitRaw  > 1000)      errors.push('Unit HP harus antara 1 – 1.000.');
-  if (isNaN(hargaRaw) || hargaRaw < 1000000 || hargaRaw > 20000000) errors.push('Harga HP harus antara Rp 1.000.000 – Rp 20.000.000.');
+  if (isNaN(hargaRaw) || hargaRaw < 100000 || hargaRaw > 20000000) errors.push('Harga HP harus antara Rp 100.000 – Rp 20.000.000.');
 
   if (errors.length > 0) {
     e.preventDefault();
