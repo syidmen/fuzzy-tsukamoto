@@ -213,6 +213,11 @@
         ({{ result.keterangan }})
       </div>
     </div>
+
+    <div class="fuzzy-card" style="margin-top:16px;">
+      <div class="fuzzy-card-title">📈 Fungsi Keanggotaan Output (z) — Z* = {{ result.z_star }}</div>
+      <canvas id="chartOutput" height="160"></canvas>
+    </div>
   </section>
 
   {% endif %}
@@ -292,6 +297,16 @@ makeChart('chartHarga', hargaLabels, [
   { label: 'Sedang', data: hargaSedang, borderColor: COLORS.sedang, borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
   { label: 'Mahal',  data: hargaMahal,  borderColor: COLORS.mahal,  borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
 ], {{ result.input_harga_val }}, 'x={{ result.input_harga_val }}jt');
+
+// Output chart
+const outputLabels   = {{ result.chart_output_labels    | tojson }};
+const outputBerkurang = {{ result.chart_output_berkurang | tojson }};
+const outputBertambah = {{ result.chart_output_bertambah | tojson }};
+
+makeChart('chartOutput', outputLabels, [
+  { label: 'Berkurang', data: outputBerkurang, borderColor: COLORS.sedikit, borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+  { label: 'Bertambah', data: outputBertambah, borderColor: COLORS.banyak,  borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+], {{ result.input_output_val }}, 'Z*={{ result.z_star }}');
 {% endif %}
 </script>
 

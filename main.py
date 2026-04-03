@@ -119,8 +119,27 @@ def hitung_tsukamoto(unit, harga):
                   else 'Cukup Berkurang' if z_star > 40
                   else 'Sangat Berkurang')
 
-    unit_pts  = [i * 10   for i in range(101)]
-    harga_pts = [i * 500_000 for i in range(61)]
+    # ── RENTANG GRAFIK ────────────────────────────────────────────────────────
+    # Ubah nilai di bawah ini untuk menyesuaikan rentang sumbu X tiap grafik.
+    #
+    # Grafik Unit HP:
+    #   range(N+1) menentukan jumlah titik; dikalikan STEP untuk nilai x-nya.
+    #   Contoh saat ini: step=10, range(101) → x dari 0 hingga 1000 unit
+    UNIT_STEP  = 10       # <-- ubah step unit HP di sini
+    UNIT_MAX_N = 101      # <-- ubah jumlah titik (max = UNIT_STEP * (N-1))
+    #
+    # Grafik Harga:
+    #   Contoh saat ini: step=500.000, range(61) → x dari 0 hingga Rp 30.000.000
+    HARGA_STEP  = 500_000  # <-- ubah step harga di sini
+    HARGA_MAX_N = 61       # <-- ubah jumlah titik (max = HARGA_STEP * (N-1))
+    #
+    # Grafik Output (z):
+    #   Rentang output tetap 0–100 sesuai fungsi Tsukamoto (tidak perlu diubah)
+    # ──────────────────────────────────────────────────────────────────────────
+
+    unit_pts  = [i * UNIT_STEP  for i in range(UNIT_MAX_N)]
+    harga_pts = [i * HARGA_STEP for i in range(HARGA_MAX_N)]
+    output_pts = list(range(0, 101))
 
     sc, sdc, bc, mc, shc, mlc = [], [], [], [], [], []
     for xp in unit_pts:
@@ -129,6 +148,11 @@ def hitung_tsukamoto(unit, harga):
     for yp in harga_pts:
         m, sh, ml = fuzzifikasi_harga(yp)
         mc.append(m); shc.append(sh); mlc.append(ml)
+
+    out_berkurang, out_bertambah = [], []
+    for z in output_pts:
+        out_berkurang.append(round((100 - z) / 80, 4) if 20 <= z <= 100 else 0.0)
+        out_bertambah.append(round((z - 20) / 80, 4) if 20 <= z <= 100 else 0.0)
 
     return {
         'unit':        unit,
@@ -156,6 +180,10 @@ def hitung_tsukamoto(unit, harga):
         'chart_harga_sedang': shc,
         'chart_harga_mahal':  mlc,
         'input_harga_val':    round(harga / 1_000_000, 2),
+        'chart_output_labels':    output_pts,
+        'chart_output_berkurang': out_berkurang,
+        'chart_output_bertambah': out_bertambah,
+        'input_output_val':       z_star,
     }
 
 
