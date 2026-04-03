@@ -31,7 +31,7 @@
             <span class="label-icon">📦</span> Unit HP Terjual
             <span class="label-unit">unit</span>
           </label>
-          <input type="number" id="unit" name="unit" step="1" min="0" required
+          <input type="text" inputmode="numeric" id="unit" name="unit" autocomplete="off" required
                  placeholder="mis. 250" value="{{ prev_unit }}"/>
           <div class="input-hint">Sedikit ≤200 · Sedang 150–500 · Banyak ≥600</div>
         </div>
@@ -40,8 +40,8 @@
             <span class="label-icon">💰</span> Harga HP
             <span class="label-unit">rupiah</span>
           </label>
-          <input type="number" id="harga" name="harga" step="100000" min="0" required
-                 placeholder="mis. 7000000" value="{{ prev_harga }}"/>
+          <input type="text" inputmode="numeric" id="harga" name="harga" autocomplete="off" required
+                 placeholder="mis. 7.000.000" value="{{ prev_harga }}"/>
           <div class="input-hint">Murah ≤3jt · Sedang 1–10jt · Mahal ≥15jt</div>
         </div>
       </div>
@@ -308,6 +308,44 @@ makeChart('chartOutput', outputLabels, [
   { label: 'Bertambah', data: outputBertambah, borderColor: COLORS.banyak,  borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
 ], {{ result.input_output_val }}, 'Z*={{ result.z_star }}');
 {% endif %}
+
+// ── Format ribuan ──
+function formatRibuan(str) {
+  const digits = str.replace(/\D/g, '');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function attachFormatter(inputEl) {
+  // Format nilai awal jika sudah terisi (misalnya dari prev_unit/prev_harga)
+  if (inputEl.value) inputEl.value = formatRibuan(inputEl.value);
+
+  inputEl.addEventListener('input', function () {
+    const pos = this.selectionStart;
+    const oldLen = this.value.length;
+    this.value = formatRibuan(this.value);
+    const diff = this.value.length - oldLen;
+    this.setSelectionRange(pos + diff, pos + diff);
+  });
+
+  inputEl.addEventListener('keydown', function (e) {
+    // Izinkan: angka, titik (separator), Backspace, Delete, arrow, Tab, Enter
+    const allowed = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Enter','Home','End'];
+    if (!/^\d$/.test(e.key) && !allowed.includes(e.key) && !(e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+    }
+  });
+}
+
+const unitEl  = document.getElementById('unit');
+const hargaEl = document.getElementById('harga');
+if (unitEl)  attachFormatter(unitEl);
+if (hargaEl) attachFormatter(hargaEl);
+
+// Strip titik sebelum submit agar server menerima angka murni
+document.querySelector('form').addEventListener('submit', function () {
+  if (unitEl)  unitEl.value  = unitEl.value.replace(/\./g, '');
+  if (hargaEl) hargaEl.value = hargaEl.value.replace(/\./g, '');
+});
 </script>
 
 </body>

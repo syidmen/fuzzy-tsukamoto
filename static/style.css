@@ -49,10 +49,10 @@ body { background: var(--bg); color: var(--text); font-family: var(--fmono); min
 label { font-family: var(--fhead); font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .label-icon { font-size: .95rem; }
 .label-unit { margin-left: auto; font-family: var(--fmono); font-size: .65rem; font-weight: 300; color: var(--border); text-transform: none; letter-spacing: 0; }
-input[type="number"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--fmono); font-size: 1.05rem; padding: 11px 14px; outline: none; transition: border-color .2s, box-shadow .2s; -moz-appearance: textfield; }
+input[type="text"], input[type="number"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--fmono); font-size: 1.05rem; padding: 11px 14px; outline: none; transition: border-color .2s, box-shadow .2s; -moz-appearance: textfield; }
 input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-input[type="number"]:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(2,132,199,.12); }
-input[type="number"]::placeholder { color: #aab4c4; font-size: .88rem; }
+input[type="text"]:focus, input[type="number"]:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(2,132,199,.12); }
+input[type="text"]::placeholder, input[type="number"]::placeholder { color: #aab4c4; font-size: .88rem; }
 .input-hint { font-size: .65rem; color: var(--muted); line-height: 1.4; }
 .btn-submit { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 13px 22px; background: linear-gradient(135deg, var(--accent2), var(--accent)); color: #ffffff; font-family: var(--fhead); font-size: .9rem; font-weight: 700; letter-spacing: .04em; border: none; border-radius: 11px; cursor: pointer; transition: opacity .2s, transform .15s, box-shadow .2s; box-shadow: 0 4px 18px rgba(2,132,199,.22); }
 .btn-submit:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(2,132,199,.3); }
